@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using CLAP.Interception;
 
 #if !FW2
@@ -55,24 +57,24 @@ namespace CLAP
 
         #region Public Methods
 
-        public int Run(string[] args, object obj)
+        public Task<int> RunAsync(string[] args, object obj)
         {
-            return TryRunInternal(args, obj);
+            return TryRunInternalAsync(args, obj);
         }
 
         #endregion Public Methods
 
         #region Private Methods
 
-        private int TryRunInternal(string[] args, object obj)
+        private async Task<int> TryRunInternalAsync(string[] args, object obj)
         {
             try
             {
-                return RunInternal(args, obj);
+                return await TryRunInternalAsync(args, obj);
             }
             catch (Exception ex)
             {
-                var rethrow = HandleError(ex, obj);
+                var rethrow = await HandleErrorAsync(ex, obj);
 
                 if (rethrow)
                 {
@@ -83,7 +85,7 @@ namespace CLAP
             }
         }
 
-        private int RunInternal(string[] args, object obj)
+        private async Task<int> RunInternalAsync(string[] args, object obj)
         {
             //
             // *** empty args are handled by the multi-parser
@@ -96,7 +98,7 @@ namespace CLAP
             //
             var firstArg = args[0];
 
-            if (HandleHelp(firstArg, obj))
+            if (await HandleHelpAsync(firstArg, obj))
             {
                 return MultiParser.ErrorCode;
             }
@@ -214,7 +216,7 @@ namespace CLAP
                 throw new UnhandledParametersException(inputArgs);
             }
 
-            return Execute(obj, method, parameterValues);
+            return await ExecuteAsync(obj, method, parameterValues);
         }
 
         private static Method SelectMethod(List<KeyValuePair<Method, List<Parameter>>> methods, List<string> args, bool allowOptionalParameters = true)
@@ -262,14 +264,14 @@ namespace CLAP
             return method;
         }
 
-        private int Execute(
+        private async Task<int> ExecuteAsync(
             object target,
             Method method,
             ParameterAndValue[] parameters)
         {
             // pre-interception
             //
-            var preVerbExecutionContext = PreInterception(target, method, parameters);
+            var preVerbExecutionContext = await PreInterceptionAsync(target, method, parameters);
 
             Exception verbException = null;
 
@@ -281,7 +283,7 @@ namespace CLAP
                 {
                     // invoke the method with the list of parameters
                     //
-                    MethodInvoker.Invoke(method.MethodInfo, target, parameters.Select(p => p.Value).ToArray());
+                    await MethodInvoker.InvokeAsync(method.MethodInfo, target, parameters.Select(p => p.Value).ToArray());
                 }
             }
             catch (TargetInvocationException tex)
@@ -297,13 +299,13 @@ namespace CLAP
             {
                 try
                 {
-                    PostInterception(target, method, parameters, preVerbExecutionContext, verbException);
+                    await PostInterceptionAsync(target, method, parameters, preVerbExecutionContext, verbException);
                 }
                 finally
                 {
                     if (verbException != null)
                     {
-                        var rethrow = HandleError(verbException, target);
+                        var rethrow = await HandleErrorAsync(verbException, target);
 
                         if (rethrow)
                         {
@@ -329,7 +331,7 @@ namespace CLAP
             // voila, e is unmodified save for _remoteStackTraceString
         }
 
-        private void PostInterception(
+        private async Task PostInterceptionAsync(
             object target,
             Method method,
             ParameterAndValue[] parameters,
@@ -362,7 +364,7 @@ namespace CLAP
 
                     var postInterceptionMethod = postInterceptionMethods.First();
 
-                    MethodInvoker.Invoke(postInterceptionMethod, target, new[] { postVerbExecutionContext });
+                    await MethodInvoker.InvokeAsync(postInterceptionMethod, target, new[] { postVerbExecutionContext });
                 }
                 else
                 {
@@ -380,7 +382,7 @@ namespace CLAP
             }
         }
 
-        private PreVerbExecutionContext PreInterception(
+        private async Task<PreVerbExecutionContext> PreInterceptionAsync(
             object target,
             Method method,
             ParameterAndValue[] parameters)
@@ -405,7 +407,7 @@ namespace CLAP
 
                     var preInterceptionMethod = preInterceptionMethods.First();
 
-                    MethodInvoker.Invoke(preInterceptionMethod, target, new[] { preVerbExecutionContext });
+                    await MethodInvoker.InvokeAsync(preInterceptionMethod, target, new[] { preVerbExecutionContext });
                 }
                 else
                 {
@@ -813,7 +815,7 @@ namespace CLAP
         /// <summary>
         /// Handles any defined global parameter that has any input
         /// </summary>
-        private void HandleDefinedGlobals(Dictionary<string, string> args, object obj)
+        private async Task HandleDefinedGlobals(Dictionary<string, string> args, object obj)
         {
             var globals = GetDefinedGlobals();
 
@@ -835,7 +837,7 @@ namespace CLAP
 
                     if (parameters.Length == 0)
                     {
-                        MethodInvoker.Invoke(method, obj, null);
+                        await MethodInvoker.InvokeAsync(method, obj, null);
                     }
                     else if (parameters.Length == 1)
                     {
@@ -888,7 +890,7 @@ namespace CLAP
             }
         }
 
-        private bool HandleHelp(string firstArg, object target)
+        private async Task<bool> HandleHelpAsync(string firstArg, object target)
         {
             var arg = firstArg;
 
@@ -923,7 +925,7 @@ namespace CLAP
 
                         var obj = method.IsStatic ? null : target;
 
-                        MethodInvoker.Invoke(method, obj, new[] { m_helpGenerator.GetHelp(this) });
+                        await MethodInvoker.InvokeAsync(method, obj, new[] { m_helpGenerator.GetHelp(this) });
 
                         return true;
                     }
@@ -941,7 +943,7 @@ namespace CLAP
             return false;
         }
 
-        internal void HandleEmptyArguments(object target)
+        internal async Task HandleEmptyArgumentsAsync(object target)
         {
             //
             // *** registered empty handlers are called by the multi-parser
@@ -968,11 +970,11 @@ namespace CLAP
 
                     // method should execute because it was already passed validation
                     //
-                    MethodInvoker.Invoke(method, obj, new[] { help });
+                    await MethodInvoker.InvokeAsync(method, obj, new[] { help });
                 }
                 else
                 {
-                    MethodInvoker.Invoke(method, obj, null);
+                    await MethodInvoker.InvokeAsync(method, obj, null);
                 }
 
                 // don't handle the default verb
@@ -994,7 +996,7 @@ namespace CLAP
                     new Dictionary<string, string>(),
                     GetParameters(defaultVerb.MethodInfo));
 
-                Execute(target, defaultVerb, parameters);
+                await ExecuteAsync(target, defaultVerb, parameters);
             }
         }
 
@@ -1013,7 +1015,7 @@ namespace CLAP
             }
         }
 
-        private bool HandleError(Exception ex, object target)
+        private async Task<bool> HandleErrorAsync(Exception ex, object target)
         {
             var context = new ExceptionContext(ex);
 
@@ -1033,7 +1035,7 @@ namespace CLAP
 
                 if (handler != null)
                 {
-                    MethodInvoker.Invoke(handler, target, new[] { context });
+                    await MethodInvoker.InvokeAsync(handler, target, new[] { context });
 
                     return context.ReThrow;
                 }

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CLAP
 {
@@ -10,14 +11,14 @@ namespace CLAP
         /// </summary>
         /// <param name="args">The user arguments</param>
         /// <param name="targets">The instances of the verb classes</param>
-        public static int RunConsole(string[] args, params object[] targets)
+        public static Task<int> RunConsoleAsync(string[] args, params object[] targets)
         {
             Debug.Assert(targets.Any());
             Debug.Assert(targets.All(t => t != null));
 
             var p = new Parser(targets.Select(t => t.GetType()).ToArray()).Console();
 
-            return ((MultiParser)p).RunTargets(args, targets);
+            return ((MultiParser)p).RunTargetsAsync(args, targets);
         }
 
         /// <summary>
@@ -25,8 +26,8 @@ namespace CLAP
         /// </summary>
         /// <typeparam name="T">The type of the parser</typeparam>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T>(string[] args)
-        { return new Parser<T>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T>(string[] args)
+        { return new Parser<T>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of a specified type
@@ -34,15 +35,15 @@ namespace CLAP
         /// <typeparam name="T">The type of the parser</typeparam>
         /// <param name="args">The user arguments</param>
         /// <param name="t">An instance of the verb class</param>
-        public static int RunConsole<T>(string[] args, T t)
-        { return new Parser<T>().Console().RunTargets(args, t); }
+        public static Task<int> RunConsoleAsync<T>(string[] args, T t)
+        { return new Parser<T>().Console().RunTargetsAsync(args, t); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2>(string[] args)
-        { return new Parser<T1, T2>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2>(string[] args)
+        { return new Parser<T1, T2>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -52,15 +53,15 @@ namespace CLAP
         /// <param name="args">The user arguments</param>
         /// <param name="t1">An instance of the verb class</param>
         /// <param name="t2">An instance of the verb class</param>
-        public static int RunConsole<T1, T2>(string[] args, T1 t1, T2 t2)
-        { return new Parser<T1, T2>().Console().RunTargets(args, t1, t2); }
+        public static Task<int> RunConsoleAsync<T1, T2>(string[] args, T1 t1, T2 t2)
+        { return new Parser<T1, T2>().Console().RunTargetsAsync(args, t1, t2); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3>(string[] args)
-        { return new Parser<T1, T2, T3>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3>(string[] args)
+        { return new Parser<T1, T2, T3>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -72,15 +73,15 @@ namespace CLAP
         /// <param name="t1">An instance of the verb class</param>
         /// <param name="t2">An instance of the verb class</param>
         /// <param name="t3">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3>(string[] args, T1 t1, T2 t2, T3 t3)
-        { return new Parser<T1, T2, T3>().Console().RunTargets(args, t1, t2, t3); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3>(string[] args, T1 t1, T2 t2, T3 t3)
+        { return new Parser<T1, T2, T3>().Console().RunTargetsAsync(args, t1, t2, t3); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4>(string[] args)
-        { return new Parser<T1, T2, T3, T4>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4>(string[] args)
+        { return new Parser<T1, T2, T3, T4>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -94,15 +95,15 @@ namespace CLAP
         /// <param name="t2">An instance of the verb class</param>
         /// <param name="t3">An instance of the verb class</param>
         /// <param name="t4">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4)
-        { return new Parser<T1, T2, T3, T4>().Console().RunTargets(args, t1, t2, t3, t4); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4)
+        { return new Parser<T1, T2, T3, T4>().Console().RunTargetsAsync(args, t1, t2, t3, t4); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4, T5>(string[] args)
-        { return new Parser<T1, T2, T3, T4, T5>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5>(string[] args)
+        { return new Parser<T1, T2, T3, T4, T5>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -118,15 +119,15 @@ namespace CLAP
         /// <param name="t3">An instance of the verb class</param>
         /// <param name="t4">An instance of the verb class</param>
         /// <param name="t5">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4, T5>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5)
-        { return new Parser<T1, T2, T3, T4, T5>().Console().RunTargets(args, t1, t2, t3, t4, t5); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5)
+        { return new Parser<T1, T2, T3, T4, T5>().Console().RunTargetsAsync(args, t1, t2, t3, t4, t5); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6>(string[] args)
-        { return new Parser<T1, T2, T3, T4, T5, T6>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6>(string[] args)
+        { return new Parser<T1, T2, T3, T4, T5, T6>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -144,15 +145,15 @@ namespace CLAP
         /// <param name="t4">An instance of the verb class</param>
         /// <param name="t5">An instance of the verb class</param>
         /// <param name="t6">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6)
-        { return new Parser<T1, T2, T3, T4, T5, T6>().Console().RunTargets(args, t1, t2, t3, t4, t5, t6); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6)
+        { return new Parser<T1, T2, T3, T4, T5, T6>().Console().RunTargetsAsync(args, t1, t2, t3, t4, t5, t6); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7>(string[] args)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7>(string[] args)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -172,15 +173,15 @@ namespace CLAP
         /// <param name="t5">An instance of the verb class</param>
         /// <param name="t6">An instance of the verb class</param>
         /// <param name="t7">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7>().Console().RunTargets(args, t1, t2, t3, t4, t5, t6, t7); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7>().Console().RunTargetsAsync(args, t1, t2, t3, t4, t5, t6, t7); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7, T8>(string[] args)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7, T8>(string[] args)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -202,15 +203,15 @@ namespace CLAP
         /// <param name="t6">An instance of the verb class</param>
         /// <param name="t7">An instance of the verb class</param>
         /// <param name="t8">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7, T8>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8>().Console().RunTargets(args, t1, t2, t3, t4, t5, t6, t7, t8); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7, T8>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8>().Console().RunTargetsAsync(args, t1, t2, t3, t4, t5, t6, t7, t8); }
 
         /// <summary>
         /// Executes a generic console static parser of some specified types
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string[] args)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8, T9>().Console().RunStatic(args); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string[] args)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8, T9>().Console().RunStaticAsync(args); }
 
         /// <summary>
         /// Executes a generic console parser of some specified types
@@ -234,7 +235,7 @@ namespace CLAP
         /// <param name="t7">An instance of the verb class</param>
         /// <param name="t8">An instance of the verb class</param>
         /// <param name="t9">An instance of the verb class</param>
-        public static int RunConsole<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9)
-        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8, T9>().Console().RunTargets(args, t1, t2, t3, t4, t5, t6, t7, t8, t9); }
+        public static Task<int> RunConsoleAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string[] args, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9)
+        { return new Parser<T1, T2, T3, T4, T5, T6, T7, T8, T9>().Console().RunTargetsAsync(args, t1, t2, t3, t4, t5, t6, t7, t8, t9); }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using CLAP;
 using NUnit.Framework;
 
@@ -729,9 +730,9 @@ namespace Tests
     {
         public Action<MethodInfo, object, object[]> Action { get; set; }
 
-        public void Invoke(MethodInfo method, object obj, object[] parameters)
+        public async Task InvokeAsync(MethodInfo method, object obj, object[] parameters)
         {
-            Action(method, obj, parameters);
+            await Task.Run(() => Action(method, obj, parameters));
         }
     }
 }

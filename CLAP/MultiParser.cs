@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-
+using System.Threading.Tasks;
 #if !FW2
 using System.Linq;
 #endif
@@ -69,7 +69,7 @@ namespace CLAP
             }
         }
 
-        private void HandleEmptyArguments(TargetResolver targetResolver)
+        private async Task HandleEmptyArgumentsAsync(TargetResolver targetResolver)
         {
             if (Register.RegisteredEmptyHandler != null)
             {
@@ -81,7 +81,7 @@ namespace CLAP
 
                 var target = targetResolver == null ? null : targetResolver.Resolve(m_types[0]);
 
-                parser.HandleEmptyArguments(target);
+                await parser.HandleEmptyArgumentsAsync(target);
             }
         }
 
@@ -176,9 +176,9 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
         /// Run a parser of static verbs
         /// </summary>
         /// <param name="args">The user arguments</param>
-        public int RunStatic(string[] args)
+        public Task<int> RunStaticAsync(string[] args)
         {
-            return RunTargets(args, null as TargetResolver);
+            return RunTargetsAsync(args, null as TargetResolver);
         }
 
         /// <summary>
@@ -186,13 +186,13 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
         /// </summary>
         /// <param name="args">The user arguments</param>
         /// <param name="targets">The instances of the verb classes</param>
-        public int RunTargets(string[] args, params object[] targets)
+        public Task<int> RunTargetsAsync(string[] args, params object[] targets)
         {
             var targetResolver = new TargetResolver(targets);
-            return RunTargets(args, targetResolver);
+            return RunTargetsAsync(args, targetResolver);
         }
 
-        public int RunTargets(string[] args, TargetResolver targetResolver)
+        public async Task<int> RunTargetsAsync(string[] args, TargetResolver targetResolver)
         {
             ParserRunner parser;
 
@@ -200,7 +200,7 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
             {
                 if (args.None() || args.All(a => string.IsNullOrEmpty(a)))
                 {
-                    HandleEmptyArguments(targetResolver);
+                    await HandleEmptyArgumentsAsync(targetResolver);
                     return SuccessCode;
                 }
 
@@ -234,7 +234,7 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
 
             var target = (targetResolver == null || targetResolver.RegisteredTypes.None()) ? null : targetResolver.Resolve(parser.Type);
 
-            return parser.Run(args, target);
+            return await parser.RunAsync(args, target);
         }
 
         private bool TryHandlePrematureError(Exception ex, TargetResolver targetResolver)

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using CLAP;
 using CLAP.Validation;
 
@@ -11,12 +12,12 @@ namespace ConsoleTest
 {
     class Program
     {
-        static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             //Debugger.Launch();
 
             //Parser.RunConsole<TheApp>(args);
-            return Parser.RunConsole<ClapApp, SomeApp, TheApp>(args);
+            return await Parser.RunConsoleAsync<ClapApp, SomeApp, TheApp>(args);
             //return Parser.RunConsole<ClapApp>(args);
             //return Parser.RunConsole<SomeApp>(args);
             //Parser.Run<SomeApp, ClapApp>(args);
