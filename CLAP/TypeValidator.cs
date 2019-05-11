@@ -43,6 +43,7 @@ namespace CLAP
             // no need to validate properties of GAC objects
             //
             if (!type.Assembly.GlobalAssemblyCache &&
+                !type.Assembly.FullName.ToLower().StartsWith("system.private.corelib") &&
                 !type.IsArray)
             {
                 // property validators:
