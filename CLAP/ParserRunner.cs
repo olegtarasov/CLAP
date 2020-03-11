@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using CLAP.Interception;
 
 #if !FW2
@@ -60,6 +61,12 @@ namespace CLAP
             return TryRunInternal(args, obj);
         }
 
+        public async Task<int> RunAsync(string[] args, object obj)
+        {
+            return await TryRunInternalAsync(args, obj);
+        }
+
+        
         #endregion Public Methods
 
         #region Private Methods
@@ -69,6 +76,25 @@ namespace CLAP
             try
             {
                 return RunInternal(args, obj);
+            }
+            catch (Exception ex)
+            {
+                var rethrow = HandleError(ex, obj);
+
+                if (rethrow)
+                {
+                    throw;
+                }
+
+                return MultiParser.ErrorCode;
+            }
+        }
+        
+        private async Task<int> TryRunInternalAsync(string[] args, object obj)
+        {
+            try
+            {
+                return await RunInternalAsync(args, obj);
             }
             catch (Exception ex)
             {
@@ -216,6 +242,140 @@ namespace CLAP
 
             return Execute(obj, method, parameterValues);
         }
+        
+        private async Task<int> RunInternalAsync(string[] args, object obj)
+        {
+            //
+            // *** empty args are handled by the multi-parser
+            //
+            //
+
+            Debug.Assert(args.Length > 0 && args.All(a => !string.IsNullOrEmpty(a)));
+
+            // the first arg should be the verb, unless there is no verb and a default is used
+            //
+            var firstArg = args[0];
+
+            if (HandleHelp(firstArg, obj))
+            {
+                return MultiParser.ErrorCode;
+            }
+
+            var verb = firstArg;
+
+            // a flag, in case there is no verb
+            //
+            var noVerb = false;
+
+            // find the method by the given verb
+            //
+            var typeVerbs = GetVerbs()
+                .ToDictionary(v => v, v => GetParameters(v.MethodInfo).ToList());
+
+            // arguments
+            var notVerbs = args
+                .Where(a => a.StartsWith(ArgumentPrefixes))
+                .ToList();
+
+            var globals = GetDefinedGlobals()
+                .Where(g => notVerbs.Any(a => a.Substring(1).StartsWith(g.Name.ToLowerInvariant())))
+                .ToList();
+
+            var notVerbsNotGlobals = notVerbs
+                .Where(a => globals.All(g => !a.Substring(1).StartsWith(g.Name.ToLowerInvariant())))
+                .ToList();
+
+            // find the method by name, parameter count and parameter names
+            var methods = (
+                from v in typeVerbs
+                where v.Key.Names.Contains(verb.ToLowerInvariant())
+                where v.Value.Count == notVerbs.Count
+                select v
+                ).ToList();
+
+            Method method = SelectMethod(methods, notVerbs);
+
+            // if arguments do not match parameter names, exclude globals
+            methods = (
+                from v in typeVerbs
+                where v.Key.Names.Contains(verb.ToLowerInvariant())
+                where v.Value.Count == notVerbsNotGlobals.Count
+                select v
+                ).ToList();
+
+            if (method == null)
+            {
+                method = SelectMethod(methods, notVerbsNotGlobals);
+            }
+
+            // if arguments do not match parameters names, exclude optional parameters
+            if (method == null)
+            {
+                const bool avoidOptionalParameters = false;
+                method = SelectMethod(methods, notVerbsNotGlobals, avoidOptionalParameters);
+            }
+
+            // if arguments do not match parameter names, use only argument count (without globals)
+            if (method == null)
+            {
+                method = methods.FirstOrDefault().Key;
+            }
+
+            // if nothing matches...
+            if (method == null)
+            {
+                method = typeVerbs.FirstOrDefault(v => v.Key.Names.Contains(verb.ToLowerInvariant())).Key;
+            }
+
+            // if no method is found - a default must exist
+            if (method == null)
+            {
+                // if there is a verb input but no method was found
+                // AND
+                // the first arg is not an input argument (doesn't start with "-" etc)
+                //
+                if (verb != null && !verb.StartsWith(ArgumentPrefixes))
+                {
+                    throw new VerbNotFoundException(verb);
+                }
+
+                method = typeVerbs.FirstOrDefault(v => v.Key.IsDefault).Key;
+
+                // no default - error
+                //
+                if (method == null)
+                {
+                    throw new MissingDefaultVerbException();
+                }
+
+                noVerb = true;
+            }
+
+            // if there is a verb - skip the first arg
+            //
+            var inputArgs = MapArguments(noVerb ? args : args.Skip(1));
+
+            HandleGlobals(inputArgs, obj);
+
+            // a list of the available parameters
+            //
+            var paremetersList = GetParameters(method.MethodInfo);
+
+            // a list of values, used when invoking the method
+            //
+            var parameterValues = ValuesFactory.CreateParameterValues(method, obj, inputArgs, paremetersList);
+
+            ValidateVerbInput(method, parameterValues.Select(kvp => kvp.Value).ToList());
+
+            // if some args weren't handled
+            //
+            if (inputArgs.Any())
+            {
+                throw new UnhandledParametersException(inputArgs);
+            }
+
+            return await ExecuteAsync(obj, method, parameterValues);
+        }
 
         private static Method SelectMethod(List<KeyValuePair<Method, List<Parameter>>> methods, List<string> args, bool allowOptionalParameters = true)
         {
@@ -282,6 +442,60 @@ namespace CLAP
                     // invoke the method with the list of parameters
                     //
                     MethodInvoker.Invoke(method.MethodInfo, target, parameters.Select(p => p.Value).ToArray());
+                }
+            }
+            catch (TargetInvocationException tex)
+            {
+                PreserveStackTrace(tex.InnerException);
+                verbException = tex.InnerException;
+            }
+            catch (Exception ex)
+            {
+                verbException = ex;
+            }
+            finally
+            {
+                try
+                {
+                    PostInterception(target, method, parameters, preVerbExecutionContext, verbException);
+                }
+                finally
+                {
+                    if (verbException != null)
+                    {
+                        var rethrow = HandleError(verbException, target);
+
+                        if (rethrow)
+                        {
+                            throw verbException;
+                        }
+                    }
+                }
+            }
+
+            return verbException == null ? MultiParser.SuccessCode : MultiParser.ErrorCode;
+        }
+        
+        private async Task<int> ExecuteAsync(
+            object target,
+            Method method,
+            ParameterAndValue[] parameters)
+        {
+            // pre-interception
+            //
+            var preVerbExecutionContext = PreInterception(target, method, parameters);
+
+            Exception verbException = null;
+
+            try
+            {
+                // actual verb execution
+                //
+                if (!preVerbExecutionContext.Cancel)
+                {
+                    // invoke the method with the list of parameters
+                    //
+                    await MethodInvoker.InvokeAsync(method.MethodInfo, target, parameters.Select(p => p.Value).ToArray());
                 }
             }
             catch (TargetInvocationException tex)

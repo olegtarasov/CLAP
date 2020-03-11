@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-
+using System.Threading.Tasks;
 #if !FW2
 using System.Linq;
 #endif
@@ -277,6 +277,16 @@ namespace CLAP
         public void Run(string[] args, T t)
         {
             base.RunTargets(args, t);
+        }
+        
+        /// <summary>
+        /// Executes the parser based on the specified targets
+        /// </summary>
+        /// <param name="args">The user arguments</param>
+        /// <param name="t">An instance of the verb class</param>
+        public async Task RunAsync(string[] args, T t)
+        {
+            await base.RunTargetsAsync(args, t);
         }
     }
 

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-
+using System.Threading.Tasks;
 #if !FW2
 using System.Linq;
 #endif
@@ -191,6 +191,17 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
             var targetResolver = new TargetResolver(targets);
             return RunTargets(args, targetResolver);
         }
+        
+        /// <summary>
+        /// Run a parser of instance verbs against instances of the verb classes
+        /// </summary>
+        /// <param name="args">The user arguments</param>
+        /// <param name="targets">The instances of the verb classes</param>
+        public async Task<int> RunTargetsAsync(string[] args, params object[] targets)
+        {
+            var targetResolver = new TargetResolver(targets);
+            return await RunTargetsAsync(args, targetResolver);
+        }
 
         public int RunTargets(string[] args, TargetResolver targetResolver)
         {
@@ -235,6 +246,51 @@ return new ParserRunner(matchingType, registration, HelpGenerator);        }
             var target = (targetResolver == null || targetResolver.RegisteredTypes.None()) ? null : targetResolver.Resolve(parser.Type);
 
             return parser.Run(args, target);
+        }
+        
+        public async Task<int> RunTargetsAsync(string[] args, TargetResolver targetResolver)
+        {
+            ParserRunner parser;
+
+            try
+            {
+                if (args.None() || args.All(a => string.IsNullOrEmpty(a)))
+                {
+                    HandleEmptyArguments(targetResolver);
+                    return SuccessCode;
+                }
+
+                if (m_types.Length == 1)
+                {
+                    parser = GetSingleTypeParser(args, Register);
+                }
+                else
+                {
+                    Debug.Assert(m_types.Length > 1);
+                    parser = GetMultiTypesParser(args, Register);
+                }
+
+                Debug.Assert(parser != null);
+            }
+            catch (Exception ex)
+            {
+                // handle error using the first available error handler
+                //
+                // (if returns true - should rethrow)
+                //
+                if (TryHandlePrematureError(ex, targetResolver))
+                {
+                    throw;
+                }
+                else
+                {
+                    return ErrorCode;
+                }
+            }
+
+            var target = (targetResolver == null || targetResolver.RegisteredTypes.None()) ? null : targetResolver.Resolve(parser.Type);
+
+            return await parser.RunAsync(args, target);
         }
 
         private bool TryHandlePrematureError(Exception ex, TargetResolver targetResolver)

@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace CLAP
 {
@@ -21,12 +23,32 @@ namespace CLAP
 
             Invoker.Invoke(method, obj, parameters);
         }
+        
+        public static Task InvokeAsync(MethodInfo method, object obj, object[] parameters)
+        {
+            Debug.Assert(method != null);
+
+            return Invoker.InvokeAsync(method, obj, parameters);
+        }
 
         private class DefaultMethodInvoker : IMethodInvoker
         {
-            public void Invoke(MethodInfo method, object obj, object[] parameters)
+            void IMethodInvoker.Invoke(MethodInfo method, object obj, object[] parameters)
             {
                 method.Invoke(obj, parameters);
+            }
+
+            public Task InvokeAsync(MethodInfo method, object obj, object[] parameters)
+            {
+                if (!IsAwaitable(method))
+                    throw new InvalidOperationException("Async method should return a Task!");
+
+                return (Task)method.Invoke(obj, parameters);
+            }
+
+            private static bool IsAwaitable(MethodInfo method)
+            {
+                return typeof(Task).IsAssignableFrom(method.ReturnType);
             }
         }
     }
@@ -34,5 +56,6 @@ namespace CLAP
     public interface IMethodInvoker
     {
         void Invoke(MethodInfo method, object obj, object[] parameters);
+        Task InvokeAsync(MethodInfo method, object obj, object[] parameters);
     }
 }

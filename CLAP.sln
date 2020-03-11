@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFormTest", "WinFormTest\WinFormTest.csproj", "{20D947B0-A9E4-480B-A24C-5D8621D4A59B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestAsync", "ConsoleTestAsync\ConsoleTestAsync.csproj", "{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,12 @@ Global
 		{20D947B0-A9E4-480B-A24C-5D8621D4A59B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20D947B0-A9E4-480B-A24C-5D8621D4A59B}.Release|Any CPU.ActiveCfg = Release|x86
 		{20D947B0-A9E4-480B-A24C-5D8621D4A59B}.Release20|Any CPU.ActiveCfg = Release|x86
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Release20|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE9B8A5B-747F-4EFF-9D90-83043E23B1B8}.Release20|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

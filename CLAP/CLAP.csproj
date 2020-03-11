@@ -4,9 +4,12 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Command-Line Auto Parser</Description>
     <Version>4.2</Version>
+    <PackageId>CLAP-DotNetCore</PackageId>
+    <PackageProjectUrl>https://github.com/olegtarasov/CLAP</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/olegtarasov/CLAP</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

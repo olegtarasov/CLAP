@@ -1012,129 +1012,129 @@ namespace Tests
             mock.Verify(o => o.Print("stringhttp://www.com/".ToLower()));
         }
 
-        [Test]
-        public void Validation_FileExists()
-        {
-            var sample = new ValidationSample_01();
+        // [Test]
+        // public void Validation_FileExists()
+        // {
+        //     var sample = new ValidationSample_01();
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "fileexists",
+        //         @"/path=c:\windows\system32\cmd.exe",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "fileexists",
+        //         @"/path=%WINDIR%\system32\cmd.exe",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "urifileexists",
+        //         @"/path=c:\windows\system32\cmd.exe",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "urifileexists",
+        //         @"/path=%WINDIR%\system32\cmd.exe",
+        //     }, sample);
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "fileexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "urifileexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        // }
 
-            Parser.Run(new[]
-            {
-                "fileexists",
-                @"/path=c:\windows\system32\cmd.exe",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "fileexists",
-                @"/path=%WINDIR%\system32\cmd.exe",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "urifileexists",
-                @"/path=c:\windows\system32\cmd.exe",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "urifileexists",
-                @"/path=%WINDIR%\system32\cmd.exe",
-            }, sample);
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "fileexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "urifileexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-        }
-
-        [Test]
-        public void Validation_DirectoryExists()
-        {
-            var sample = new ValidationSample_01();
-
-            Parser.Run(new[]
-            {
-                "directoryexists",
-                @"/path=c:\windows\system32",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "directoryexists",
-                @"/path=%WINDIR%\system32",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "uridirectoryexists",
-                @"/path=c:\windows\system32",
-            }, sample);
-
-            Parser.Run(new[]
-            {
-                "uridirectoryexists",
-                @"/path=%WINDIR%\system32",
-            }, sample);
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "directoryexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "uridirectoryexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-        }
-
-        [Test]
-        public void Validation_PathExists()
-        {
-            var sample = new ValidationSample_01();
-
-            Parser.Run(new[] { "pathexists", @"/path=c:\windows\system32" }, sample);
-            Parser.Run(new[] { "pathexists", @"/path=%WINDIR%\system32" }, sample);
-            Parser.Run(new[] { "pathexists", @"/path=c:\windows\system32\cmd.exe" }, sample);
-            Parser.Run(new[] { "pathexists", @"/path=%WINDIR%\system32\cmd.exe" }, sample);
-
-            Parser.Run(new[] { "uripathexists", @"/path=c:\windows\system32\cmd.exe" }, sample);
-            Parser.Run(new[] { "uripathexists", @"/path=%WINDIR%\system32\cmd.exe" }, sample);
-            Parser.Run(new[] { "uripathexists", @"/path=c:\windows\system32" }, sample);
-            Parser.Run(new[] { "uripathexists", @"/path=%WINDIR%\system32" }, sample);
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "pathexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-
-            Expect(() => Parser.Run(new[]
-                                        {
-                                            "uripathexists",
-                                            @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
-                                            ,
-                                        }, sample),
-                   Throws.InstanceOf<ValidationException>());
-        }
+        // [Test]
+        // public void Validation_DirectoryExists()
+        // {
+        //     var sample = new ValidationSample_01();
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "directoryexists",
+        //         @"/path=c:\windows\system32",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "directoryexists",
+        //         @"/path=%WINDIR%\system32",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "uridirectoryexists",
+        //         @"/path=c:\windows\system32",
+        //     }, sample);
+        //
+        //     Parser.Run(new[]
+        //     {
+        //         "uridirectoryexists",
+        //         @"/path=%WINDIR%\system32",
+        //     }, sample);
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "directoryexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "uridirectoryexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        // }
+        //
+        // [Test]
+        // public void Validation_PathExists()
+        // {
+        //     var sample = new ValidationSample_01();
+        //
+        //     Parser.Run(new[] { "pathexists", @"/path=c:\windows\system32" }, sample);
+        //     Parser.Run(new[] { "pathexists", @"/path=%WINDIR%\system32" }, sample);
+        //     Parser.Run(new[] { "pathexists", @"/path=c:\windows\system32\cmd.exe" }, sample);
+        //     Parser.Run(new[] { "pathexists", @"/path=%WINDIR%\system32\cmd.exe" }, sample);
+        //
+        //     Parser.Run(new[] { "uripathexists", @"/path=c:\windows\system32\cmd.exe" }, sample);
+        //     Parser.Run(new[] { "uripathexists", @"/path=%WINDIR%\system32\cmd.exe" }, sample);
+        //     Parser.Run(new[] { "uripathexists", @"/path=c:\windows\system32" }, sample);
+        //     Parser.Run(new[] { "uripathexists", @"/path=%WINDIR%\system32" }, sample);
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "pathexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        //
+        //     Expect(() => Parser.Run(new[]
+        //                                 {
+        //                                     "uripathexists",
+        //                                     @"/path=y:\{B2C97314-4C55-4EB9-9049-63BB65AC980A}.{6E8698D0-4CFA-4ACB-8AA3-26476F490228}"
+        //                                     ,
+        //                                 }, sample),
+        //            Throws.InstanceOf<ValidationException>());
+        // }
 
         [Test]
         public void Unhandled_Exception_One()
