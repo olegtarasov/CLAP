@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using CLAP.Interception;
-
+using Microsoft.Extensions.DependencyInjection;
 #if !FW2
 using System.Linq;
 #endif
@@ -111,139 +111,27 @@ namespace CLAP
 
         private int RunInternal(string[] args, object obj)
         {
-            //
-            // *** empty args are handled by the multi-parser
-            //
-            //
-
-            Debug.Assert(args.Length > 0 && args.All(a => !string.IsNullOrEmpty(a)));
-
-            // the first arg should be the verb, unless there is no verb and a default is used
-            //
-            var firstArg = args[0];
-
-            if (HandleHelp(firstArg, obj))
+            var (method, parameterValues) = GetMethodAndParameterValues(args, obj);
+            if (method == null)
             {
                 return MultiParser.ErrorCode;
-            }
-
-            var verb = firstArg;
-
-            // a flag, in case there is no verb
-            //
-            var noVerb = false;
-
-            // find the method by the given verb
-            //
-            var typeVerbs = GetVerbs()
-                .ToDictionary(v => v, v => GetParameters(v.MethodInfo).ToList());
-
-            // arguments
-            var notVerbs = args
-                .Where(a => a.StartsWith(ArgumentPrefixes))
-                .ToList();
-
-            var globals = GetDefinedGlobals()
-                .Where(g => notVerbs.Any(a => a.Substring(1).StartsWith(g.Name.ToLowerInvariant())))
-                .ToList();
-
-            var notVerbsNotGlobals = notVerbs
-                .Where(a => globals.All(g => !a.Substring(1).StartsWith(g.Name.ToLowerInvariant())))
-                .ToList();
-
-            // find the method by name, parameter count and parameter names
-            var methods = (
-                from v in typeVerbs
-                where v.Key.Names.Contains(verb.ToLowerInvariant())
-                where v.Value.Count == notVerbs.Count
-                select v
-                ).ToList();
-
-            Method method = SelectMethod(methods, notVerbs);
-
-            // if arguments do not match parameter names, exclude globals
-            methods = (
-                from v in typeVerbs
-                where v.Key.Names.Contains(verb.ToLowerInvariant())
-                where v.Value.Count == notVerbsNotGlobals.Count
-                select v
-                ).ToList();
-
-            if (method == null)
-            {
-                method = SelectMethod(methods, notVerbsNotGlobals);
-            }
-
-            // if arguments do not match parameters names, exclude optional parameters
-            if (method == null)
-            {
-                const bool avoidOptionalParameters = false;
-                method = SelectMethod(methods, notVerbsNotGlobals, avoidOptionalParameters);
-            }
-
-            // if arguments do not match parameter names, use only argument count (without globals)
-            if (method == null)
-            {
-                method = methods.FirstOrDefault().Key;
-            }
-
-            // if nothing matches...
-            if (method == null)
-            {
-                method = typeVerbs.FirstOrDefault(v => v.Key.Names.Contains(verb.ToLowerInvariant())).Key;
-            }
-
-            // if no method is found - a default must exist
-            if (method == null)
-            {
-                // if there is a verb input but no method was found
-                // AND
-                // the first arg is not an input argument (doesn't start with "-" etc)
-                //
-                if (verb != null && !verb.StartsWith(ArgumentPrefixes))
-                {
-                    throw new VerbNotFoundException(verb);
-                }
-
-                method = typeVerbs.FirstOrDefault(v => v.Key.IsDefault).Key;
-
-                // no default - error
-                //
-                if (method == null)
-                {
-                    throw new MissingDefaultVerbException();
-                }
-
-                noVerb = true;
-            }
-
-            // if there is a verb - skip the first arg
-            //
-            var inputArgs = MapArguments(noVerb ? args : args.Skip(1));
-
-            HandleGlobals(inputArgs, obj);
-
-            // a list of the available parameters
-            //
-            var paremetersList = GetParameters(method.MethodInfo);
-
-            // a list of values, used when invoking the method
-            //
-            var parameterValues = ValuesFactory.CreateParameterValues(method, obj, inputArgs, paremetersList);
-
-            ValidateVerbInput(method, parameterValues.Select(kvp => kvp.Value).ToList());
-
-            // if some args weren't handled
-            //
-            if (inputArgs.Any())
-            {
-                throw new UnhandledParametersException(inputArgs);
             }
 
             return Execute(obj, method, parameterValues);
         }
         
         private async Task<int> RunInternalAsync(string[] args, object obj)
+        {
+            var (method, parameterValues) = GetMethodAndParameterValues(args, obj);
+            if (method == null)
+            {
+                return MultiParser.ErrorCode;
+            }
+
+            return await ExecuteAsync(obj, method, parameterValues);
+        }
+
+        private (Method method, ParameterAndValue[] parameterValues) GetMethodAndParameterValues(string[] args, object obj)
         {
             //
             // *** empty args are handled by the multi-parser
@@ -258,9 +146,12 @@ namespace CLAP
 
             if (HandleHelp(firstArg, obj))
             {
-                return MultiParser.ErrorCode;
+                return (null, null);
             }
-
+            
+            // Configure services if supported
+            var serviceProvider = CreateServiceProvider(obj);
+            
             var verb = firstArg;
 
             // a flag, in case there is no verb
@@ -363,7 +254,7 @@ namespace CLAP
 
             // a list of values, used when invoking the method
             //
-            var parameterValues = ValuesFactory.CreateParameterValues(method, obj, inputArgs, paremetersList);
+            var parameterValues = ValuesFactory.CreateParameterValues(method, obj, inputArgs, paremetersList, serviceProvider);
 
             ValidateVerbInput(method, parameterValues.Select(kvp => kvp.Value).ToList());
 
@@ -374,7 +265,27 @@ namespace CLAP
                 throw new UnhandledParametersException(inputArgs);
             }
 
-            return await ExecuteAsync(obj, method, parameterValues);
+            return (method, parameterValues);
+        }
+
+        private ServiceProvider CreateServiceProvider(object obj)
+        {
+            ServiceProvider serviceProvider = null;
+            var serviceConfigurationMethod =
+                (from m in Type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    let parameters = m.GetParameters()
+                    where parameters.Length == 1 && parameters[0].ParameterType == typeof(IServiceCollection)
+                    select m)
+                .FirstOrDefault();
+
+            if (serviceConfigurationMethod != null)
+            {
+                var serviceCollection = new ServiceCollection();
+                serviceConfigurationMethod.Invoke(obj, new[] {serviceCollection});
+                serviceProvider = serviceCollection.BuildServiceProvider();
+            }
+
+            return serviceProvider;
         }
 
         private static Method SelectMethod(List<KeyValuePair<Method, List<Parameter>>> methods, List<string> args, bool allowOptionalParameters = true)
@@ -1202,11 +1113,13 @@ namespace CLAP
             {
                 // create an array of arguments that matches the method
                 //
+                var serviceProvider = CreateServiceProvider(target);
                 var parameters = ValuesFactory.CreateParameterValues(
                     defaultVerb,
                     target,
                     new Dictionary<string, string>(),
-                    GetParameters(defaultVerb.MethodInfo));
+                    GetParameters(defaultVerb.MethodInfo),
+                    serviceProvider);
 
                 Execute(target, defaultVerb, parameters);
             }

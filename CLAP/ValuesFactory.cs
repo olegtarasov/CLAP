@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using CLAP.Interception;
-
+using Microsoft.Extensions.DependencyInjection;
 #if !FW2
 using System.Linq;
 #endif
@@ -166,7 +166,8 @@ namespace CLAP
             Method method,
             object target,
             Dictionary<string, string> inputArgs,
-            IEnumerable<Parameter> list)
+            IEnumerable<Parameter> list,
+            ServiceProvider serviceProvider)
         {
             var parameters = new List<ParameterAndValue>();
 
@@ -197,27 +198,33 @@ namespace CLAP
                 //
                 if (inputKey == null)
                 {
-                    if (p.Required)
-                    {
-                        throw new MissingRequiredArgumentException(method, parameterInfo.Name);
-                    }
+                    // Try to get the value from service provider
+                    value = serviceProvider?.GetService(parameterInfo.ParameterType);
 
-                    if (p.DefaultProvider != null)
+                    if (value == null)
                     {
-                        value = p.DefaultProvider.GetDefault(new VerbExecutionContext(method, target, inputArgsCopy));
-                    }
-                    else
-                    {
-                        // the default is the value
+                        if (p.Required)
+                        {
+                            throw new MissingRequiredArgumentException(method, parameterInfo.Name);
+                        }
+
+                        if (p.DefaultProvider != null)
+                        {
+                            value = p.DefaultProvider.GetDefault(new VerbExecutionContext(method, target, inputArgsCopy));
+                        }
+                        else
+                        {
+                            // the default is the value
+                            //
+                            value = p.Default;
+                        }
+
+                        // convert the default value, if different from parameter's value (guid, for example)
                         //
-                        value = p.Default;
-                    }
-
-                    // convert the default value, if different from parameter's value (guid, for example)
-                    //
-                    if (value is string && !(parameterInfo.ParameterType == typeof(string)))
-                    {
-                        value = GetValueForParameter(parameterInfo, parameterInfo.ParameterType, "{DEFAULT}", (string)value);
+                        if (value is string && !(parameterInfo.ParameterType == typeof(string)))
+                        {
+                            value = GetValueForParameter(parameterInfo, parameterInfo.ParameterType, "{DEFAULT}", (string)value);
+                        }
                     }
                 }
                 else
