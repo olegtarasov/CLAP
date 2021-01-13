@@ -38,10 +38,13 @@ namespace CLAP
                 method.Invoke(obj, parameters);
             }
 
-            public Task InvokeAsync(MethodInfo method, object obj, object[] parameters)
+            Task IMethodInvoker.InvokeAsync(MethodInfo method, object obj, object[] parameters)
             {
                 if (!IsAwaitable(method))
-                    throw new InvalidOperationException("Async method should return a Task!");
+                {
+                    method.Invoke(obj, parameters);
+                    return Task.CompletedTask;
+                }
 
                 return (Task)method.Invoke(obj, parameters);
             }
