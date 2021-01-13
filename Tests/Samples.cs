@@ -1533,7 +1533,7 @@ namespace Tests
         public int Par { get; private set; }
         
         [Verb]
-        public void Foo([Environment("TEST_PAR")] int par)
+        public void Foo([Environment("TEST_PAR"), Required] int par)
         {
             Par = par;
         }
