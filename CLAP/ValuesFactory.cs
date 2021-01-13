@@ -182,6 +182,21 @@ namespace CLAP
 
                 var names = p.Names;
 
+                // the actual value, converted to the relevant parameter type
+                //
+                object value = null;
+                
+                if (p.Inject)
+                {
+                    if (serviceProvider == null)
+                    {
+                        throw new InvalidOperationException("Some parameters were marked with InjectAttribute, but IServiceProvider was not configured.\n" +
+                                                            "Add a public void ConfigureServices(IServiceCollection services) method to your App class to configure a service provider.");
+                    }
+                    
+                    value = serviceProvider.GetRequiredService(parameterInfo.ParameterType);
+                }
+
                 // according to the parameter names, try to find a match from the input
                 //
                 var inputKey = names.FirstOrDefault(n => inputArgs.ContainsKey(n));
@@ -190,33 +205,33 @@ namespace CLAP
                 //
                 string stringValue = null;
 
-                // the actual value, converted to the relevant parameter type
-                //
-                object value = null;
-
                 // if no input was found that matches this parameter
                 //
                 if (inputKey == null)
                 {
-                    // Try to get the value from service provider
-                    value = serviceProvider?.GetService(parameterInfo.ParameterType);
-
                     if (value == null)
                     {
-                        if (p.Required)
+                        if (!string.IsNullOrEmpty(p.EnvironmentVariableName))
                         {
-                            throw new MissingRequiredArgumentException(method, parameterInfo.Name);
-                        }
-
-                        if (p.DefaultProvider != null)
-                        {
-                            value = p.DefaultProvider.GetDefault(new VerbExecutionContext(method, target, inputArgsCopy));
+                            value = Environment.GetEnvironmentVariable(p.EnvironmentVariableName);
                         }
                         else
                         {
-                            // the default is the value
-                            //
-                            value = p.Default;
+                            if (p.Required)
+                            {
+                                throw new MissingRequiredArgumentException(method, parameterInfo.Name);
+                            }
+
+                            if (p.DefaultProvider != null)
+                            {
+                                value = p.DefaultProvider.GetDefault(new VerbExecutionContext(method, target, inputArgsCopy));
+                            }
+                            else
+                            {
+                                // the default is the value
+                                //
+                                value = p.Default;
+                            }
                         }
 
                         // convert the default value, if different from parameter's value (guid, for example)

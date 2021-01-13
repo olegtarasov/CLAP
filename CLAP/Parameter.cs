@@ -44,6 +44,16 @@ namespace CLAP
         public string Separator { get; private set; }
 
         /// <summary>
+        /// Name of an environment variable to get value from if not explicitly specified.
+        /// </summary>
+        public string EnvironmentVariableName { get; }
+
+        /// <summary>
+        /// Defines whether this parameter should be injected from <see cref="IServiceProvider"/> (if it was configured).
+        /// </summary>
+        public bool Inject { get; }
+
+        /// <summary>
         /// The <see cref="ParameterInfo"/> this parameter describes
         /// </summary>
         public ParameterInfo ParameterInfo { get; private set; }
@@ -91,6 +101,16 @@ namespace CLAP
             if (parameter.HasAttribute<SeparatorAttribute>())
             {
                 Separator = parameter.GetAttribute<SeparatorAttribute>().Separator;
+            }
+
+            if (parameter.HasAttribute<EnvironmentAttribute>())
+            {
+                EnvironmentVariableName = parameter.GetAttribute<EnvironmentAttribute>().VariableName;
+            }
+
+            if (parameter.HasAttribute<InjectAttribute>())
+            {
+                Inject = true;
             }
         }
 

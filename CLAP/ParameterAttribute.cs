@@ -136,4 +136,31 @@ namespace CLAP
             Separator = separator;
         }
     }
+
+    /// <summary>
+    /// Gets parameter value from environment variable if not set explicitly.
+    /// </summary>
+    [Serializable]
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class EnvironmentAttribute : Attribute
+    {
+        /// <summary>
+        /// Environment variable name.
+        /// </summary>
+        public string VariableName { get; set; }
+
+        public EnvironmentAttribute(string variableName)
+        {
+            VariableName = variableName;
+        }
+    }
+
+    /// <summary>
+    /// Injects parameter value from <see cref="IServiceProvider"/> if it's available.
+    /// </summary>
+    [Serializable]
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class InjectAttribute : Attribute
+    {
+    }
 }

@@ -2307,5 +2307,67 @@ namespace Tests
                 }, sut);
             Assert.That(sut.IsBCalled, Is.True);            
         }
+
+        [Test]
+        public void CanInjectServiceWithInjectAttribute()
+        {
+            var sut = new Sample_75();
+            Parser.Run(new[]
+            {
+                "foo"
+            }, sut);
+            Assert.That(sut.Printer != null);
+        }
+
+        [Test]
+        public void CantInjectServiceWithoutInjectAttribute()
+        {
+            var sut = new Sample_75();
+            Parser.Run(new[]
+            {
+                "bar"
+            }, sut);
+            Assert.That(sut.Printer == null);
+        }
+        
+        [Test]
+        public void CantInjectServiceWhenServiceProviderNotConfigured()
+        {
+            var sut = new Sample_76();
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                Parser.Run(new[]
+                {
+                    "foo"
+                }, sut);
+            });
+        }
+
+        [Test]
+        public void CanGetParameterValueFromEnvironment()
+        {
+            Environment.SetEnvironmentVariable("TEST_PAR", "42");
+            var sut = new Sample_77();
+            Parser.Run(new[]
+            {
+                "foo"
+            }, sut);
+            Assert.That(sut.Par == 42);
+            Environment.SetEnvironmentVariable("TEST_PAR", null);
+        }
+        
+        [Test]
+        public void ExplicitParameterOverridesEnvironment()
+        {
+            Environment.SetEnvironmentVariable("TEST_PAR", "24");
+            var sut = new Sample_77();
+            Parser.Run(new[]
+            {
+                "foo",
+                "-par=31"
+            }, sut);
+            Assert.That(sut.Par == 31);
+            Environment.SetEnvironmentVariable("TEST_PAR", null);
+        }
     }
 }

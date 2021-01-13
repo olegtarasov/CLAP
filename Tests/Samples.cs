@@ -4,6 +4,7 @@ using System.Reflection;
 using CLAP;
 using CLAP.Interception;
 using CLAP.Validation;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests
 {
@@ -1495,5 +1496,46 @@ namespace Tests
 
         public bool IsACalled { get; private set; }
         public bool IsBCalled { get; private set; }
+    }
+
+    public class Sample_75
+    {
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<IPrinter, Printer>();
+        }
+
+        public IPrinter Printer { get; private set; }
+        
+        [Verb]
+        public void Foo([Inject] IPrinter printer)
+        {
+            Printer = printer;
+        }
+
+        [Verb]
+        public void Bar(IPrinter printer)
+        {
+            Printer = printer;
+        }
+    }
+    
+    public class Sample_76
+    {
+        [Verb]
+        public void Foo([Inject] IPrinter printer)
+        {
+        }
+    }
+    
+    public class Sample_77
+    {
+        public int Par { get; private set; }
+        
+        [Verb]
+        public void Foo([Environment("TEST_PAR")] int par)
+        {
+            Par = par;
+        }
     }
 }
